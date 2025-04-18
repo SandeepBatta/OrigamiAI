@@ -1,2 +1,3 @@
 streamlit
 openai
+auth0-python

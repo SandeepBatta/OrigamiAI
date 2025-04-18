@@ -1,20 +1,16 @@
+import os
+import base64
+import requests
+import streamlit as st
+from uuid import uuid4
 from openai import OpenAI
 import json
-import base64
-import streamlit as st
 
-
-# Function to encode the image
-def encode_image(image):
-    return base64.b64encode(image).decode("utf-8")
-
-
-# Set up OpenAI API client
 client = OpenAI()
 
 
-# ----------- Image Generation -----------
-def generate_image(prompt: str):
+def generate_image(prompt: str, user_id: str) -> tuple[str, str]:
+    """Call OpenAI to generate an image, download it locally, return local path & revised prompt."""
     image_response = client.images.generate(
         model=st.secrets["MODEL_IMAGE"], prompt=prompt, n=1, size="1024x1024"
     )
@@ -23,23 +19,31 @@ def generate_image(prompt: str):
     image_url = image_data.url
 
     revised_prompt = getattr(image_data, "revised_prompt", None)
-    return image_url, revised_prompt
+
+    # fetch & save locally
+    r = requests.get(image_url)
+    folder = os.path.join("images", user_id)
+    os.makedirs(folder, exist_ok=True)
+    fname = f"{uuid4().hex}.png"
+    path = os.path.join(folder, fname)
+    with open(path, "wb") as f:
+        f.write(r.content)
+
+    return path, revised_prompt
 
 
-# ----------- Dispatcher -----------
-def handle_response(response_text, response_id) -> dict:
-
+def handle_response(response_text: str, response_id: str, user_id: str) -> dict:
+    """Parse assistant output; if JSON instructs image, generate and return image message."""
     try:
-        # Try parsing as JSON to detect image request
         parsed = json.loads(response_text)
         if parsed.get("action") == "generate_image":
             image_prompt = parsed["prompt"]
-            image_url, revised_prompt = generate_image(image_prompt)
+            image_path, revised_prompt = generate_image(image_prompt, user_id)
             return {
                 "role": "assistant",
                 "type": "image",
                 "content": revised_prompt,
-                "url": image_url,
+                "url": image_path,
                 "response_id": response_id,
             }
     except json.JSONDecodeError:
@@ -55,10 +59,15 @@ def handle_response(response_text, response_id) -> dict:
     }
 
 
-# ----------- Chat Handling -----------
-def send_to_ai(prompt: str, attachements=None, response_id=None):
-    developer_message = {"role": "developer", "content": st.secrets["SYSTEM_PROMPT"]}
-    user_message = {
+def send_to_ai(
+    prompt,
+    user_id,
+    attachements=None,
+    previous_response_id=None,
+):
+    """Send messages to OpenAI chat endpoint and dispatch to text/image handler."""
+    system = {"role": "developer", "content": st.secrets["SYSTEM_PROMPT"]}
+    user_msg = {
         "role": "user",
         "content": [
             {
@@ -70,17 +79,19 @@ def send_to_ai(prompt: str, attachements=None, response_id=None):
 
     if attachements:
         for attachement in attachements:
-            user_message["content"].append(
+            user_msg["content"].append(
                 {
                     "type": "input_image",
                     "image_url": f"data:image/jpeg;base64,{base64.b64encode(attachement.read()).decode("utf-8")}",
                 }
             )
 
-    messages = [developer_message, user_message]
+    messages = [system, user_msg]
 
-    response = client.responses.create(
-        model=st.secrets["MODEL_CHAT"], input=messages, previous_response_id=response_id
+    res = client.responses.create(
+        model=st.secrets["MODEL_CHAT"],
+        input=messages,
+        previous_response_id=previous_response_id,
     )
 
-    return handle_response(response.output_text, response.id)
+    return handle_response(res.output_text, res.id, user_id)
