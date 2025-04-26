@@ -6,7 +6,7 @@ import time
 
 
 def show_app():
-    st.set_page_config(page_title="Origami AI", page_icon="static/logo.jpeg")
+    st.set_page_config(page_title="Origami AI", page_icon="static/origami_icon.png")
     st.title("Origami AI Studio")
     st.caption("Unfold your creativity with the power of AI")
 
@@ -18,7 +18,7 @@ def show_app():
 
     # ─── Sidebar: list & create sessions ────────────────────────────────────────
     with st.sidebar:
-        st.logo(image="static/logo.jpeg", size="large")
+        st.logo(image="static/origami_icon.png", size="large")
         st.subheader(f"Logged in as {user_id}")
         if st.button("Logout", icon=":material/logout:", use_container_width=True):
             st.logout()
