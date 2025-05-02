@@ -117,7 +117,7 @@ def show_app():
         save_message(user_id, st.session_state.session_id, user_msg)
         # Refresh session summaries after saving a message
         st.session_state.session_summaries = get_session_summaries(user_id)
-        with st.chat_message(msg["role"], avatar="static/you_icon.jpg"):
+        with st.chat_message(msg["role"], avatar="static/you_icon.png"):
             st.markdown(prompt.text)
 
         # Call AI and stream response
