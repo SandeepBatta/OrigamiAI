@@ -79,10 +79,11 @@ def get_sessions(user_id: str) -> list[str]:
     return [row[0] for row in cur.fetchall()]
 
 
-def get_session_summaries(user_id: str) -> list[tuple[str, str]]:
+def get_session_summaries(user_id: str) -> list[tuple[str, str, str]]:
     """
-    Returns a list of (session_id, title) sorted by newest‑first.
-    Title = date of first message + a snippet of that first message.
+    Returns a list of (session_id, snippet, ts) sorted by newest‑first.
+    snippet = a snippet of the first message.
+    ts = timestamp of the first message.
     """
     cur.execute(
         """
@@ -102,8 +103,6 @@ def get_session_summaries(user_id: str) -> list[tuple[str, str]]:
     rows = cur.fetchall()
     summaries = []
     for session_id, content, ts in rows:
-        date = ts.split(" ")[0]  # “YYYY‑MM‑DD”
         snippet = (content[:20] + "...") if len(content) > 20 else content
-        title = f"{date} — {snippet}"
-        summaries.append((session_id, snippet))
+        summaries.append((session_id, snippet, ts))
     return summaries
