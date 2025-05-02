@@ -1,0 +1,32 @@
+[client]
+showErrorDetails = "none"
+toolbarMode = "minimal" # We can add "screencast" option with st.set_page_config
+
+[theme]
+
+base = "light"
+
+# Primary accent color.
+primaryColor = "#4F4F4F"
+
+# Background color of the app.
+backgroundColor = "#FFFFFF"
+
+# Background color used for most interactive widgets.
+secondaryBackgroundColor = "#F0F2F6"
+
+# Color used for almost all text.
+textColor = "#4F4F4F"
+
+# Color used for all links.
+linkColor = "#262730"
+
+headingFont = "raleway"
+
+# Whether to show a border around input widgets.
+showWidgetBorder = true
+
+# Whether to show a vertical separator between the sidebar and the main
+# content area.
+showSidebarBorder = true
+
