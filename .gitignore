@@ -173,6 +173,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-.streamlit
+.streamlit/secrets.toml
 images
 chat.db
