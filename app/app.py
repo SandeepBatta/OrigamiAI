@@ -4,6 +4,7 @@ from image_generation import send_to_ai
 import random
 import time
 from datetime import datetime, timedelta
+import pytz
 
 
 def show_app():
@@ -23,15 +24,30 @@ def show_app():
     if "response_id" not in st.session_state:
         st.session_state.response_id = None
 
+    # Timezone selector in sidebar
+    timezones = pytz.all_timezones
+    default_tz = "US/Eastern"
+    if "user_timezone" not in st.session_state:
+        st.session_state["user_timezone"] = default_tz
+
     # ─── Sidebar: list & create sessions ────────────────────────────────────────
     with st.sidebar:
         st.logo(image="static/origami_icon.png", size="large")
         st.subheader("Logged in as:")
         st.text(user_id)
+
         if st.button("Logout", icon=":material/logout:", use_container_width=True):
             st.logout()
 
         st.divider()
+
+        user_tz = st.sidebar.selectbox(
+            "Select your timezone",
+            timezones,
+            index=timezones.index(st.session_state["user_timezone"]),
+            key="tz_selectbox",
+        )
+        st.session_state["user_timezone"] = user_tz
 
         # New chat button creates and prepends a fresh session
         if st.button(
@@ -46,8 +62,6 @@ def show_app():
             st.session_state.session_id = new_sid
             st.session_state.response_id = None
             st.rerun()
-
-        st.divider()
 
         st.title("Chat History :material/history:")
 
@@ -66,22 +80,30 @@ def show_app():
 
         # Group sessions
         grouped = {"Today": [], "Last Week": [], "Previous Chats": []}
+        user_tz_obj = pytz.timezone(st.session_state["user_timezone"])
+        now_local = datetime.now(pytz.utc).astimezone(user_tz_obj).date()
+        week_ago_local = now_local - timedelta(days=7)
         for sid, snippet, ts in session_summaries:
-            session_date = datetime.strptime(ts.split()[0], "%Y-%m-%d").date()
-            if session_date == datetime.now().date():
-                grouped["Today"].append((sid, snippet, ts))
-            elif session_date > datetime.now().date() - timedelta(days=7):
-                grouped["Last Week"].append((sid, snippet, ts))
+            # Convert UTC timestamp to user's timezone
+            utc_dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            utc_dt = pytz.utc.localize(utc_dt)
+            local_dt = utc_dt.astimezone(user_tz_obj)
+            session_date = local_dt.date()
+            date_str = local_dt.strftime("%m/%d/%Y")
+            if session_date == now_local:
+                grouped["Today"].append((sid, snippet, date_str))
+            elif session_date > week_ago_local:
+                grouped["Last Week"].append((sid, snippet, date_str))
             else:
-                grouped["Previous Chats"].append((sid, snippet, ts))
+                grouped["Previous Chats"].append((sid, snippet, date_str))
 
         def render_history_group(label, items):
             if not items:
                 return
             st.markdown(f"**{label}**")
-            for sid, snippet, ts in items:
+            for sid, snippet, date_str in items:
                 is_selected = sid == st.session_state.session_id
-                btn_label = f"{ts.split()[0]}  {snippet}"
+                btn_label = f"{date_str}  {snippet}"
                 btn_kwargs = {"key": f"hist_{sid}", "use_container_width": True}
                 if is_selected:
                     btn_kwargs["disabled"] = True
@@ -119,6 +141,10 @@ def show_app():
         st.session_state.session_summaries = get_session_summaries(user_id)
         with st.chat_message("user", avatar="static/you_icon.png"):
             st.markdown(prompt.text)
+            # Show image preview if user uploaded an image
+            if prompt.files:
+                for file in prompt.files:
+                    st.image(file, caption="Uploaded image")
 
         # Call AI and stream response
         with st.spinner(random.choice(st.secrets["spinner_messages"]), show_time=True):
