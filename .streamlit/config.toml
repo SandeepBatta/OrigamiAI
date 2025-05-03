@@ -1,6 +1,17 @@
+[server]
+headless = true
+port = 8501
+address = "localhost"
+enableStaticServing = true
+
 [client]
 showErrorDetails = "none"
 toolbarMode = "minimal" # We can add "screencast" option with st.set_page_config
+
+[[theme.fontFaces]]
+family="raleway"
+url="app/static/Raleway-Thin.ttf"
+style="thin"
 
 [theme]
 
