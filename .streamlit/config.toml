@@ -1,7 +1,4 @@
 [server]
-headless = true
-port = 8501
-address = "localhost"
 enableStaticServing = true
 
 [client]
