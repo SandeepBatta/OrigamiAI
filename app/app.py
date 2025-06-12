@@ -69,6 +69,14 @@ def show_app():
         if "session_summaries" not in st.session_state:
             st.session_state.session_summaries = get_session_summaries(user_id)
 
+        if not st.session_state.session_summaries:
+            new_sid = new_session(user_id)
+            # prepend so it appears first
+            st.session_state.session_summaries.insert(0, (new_sid, "New chat"))
+            st.session_state.session_id = new_sid
+            st.session_state.response_id = None
+            st.rerun()
+
         # Only show sessions that have at least one message and correct tuple length
         session_summaries = [
             s for s in st.session_state.session_summaries if len(s) == 3
