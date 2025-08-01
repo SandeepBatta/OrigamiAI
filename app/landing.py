@@ -7,6 +7,12 @@ def show_landing():
     )
     st.title("Origami AI Studio", anchor=False)
     st.write("Please sign up or log in to continue.")
+
+    # Privacy notice
+    st.info(
+        "📋 **Privacy Notice**: By using Origami AI Studio, you agree that your chat conversations and interactions may be used for research and improvement purposes. We are committed to protecting your privacy while enhancing our AI capabilities."
+    )
+
     if st.button(
         "Sign up / Log in",
         key="login-button",
