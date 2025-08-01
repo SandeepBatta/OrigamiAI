@@ -2,3 +2,8 @@ streamlit
 openai
 auth0-python
 authlib
+plotly
+pandas
+pytz
+reportlab
+pillow
