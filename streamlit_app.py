@@ -14,4 +14,11 @@ if not st.experimental_user.get("email_verified", False):
         st.rerun()
     st.stop()
 
-show_app()
+# 3) Check if accessing admin portal
+query_params = st.query_params
+if "admin" in query_params:
+    from app.admin import show_admin_portal
+
+    show_admin_portal()
+else:
+    show_app()
