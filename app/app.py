@@ -24,6 +24,12 @@ def show_app():
     if "response_id" not in st.session_state:
         st.session_state.response_id = None
 
+    # Check if current user is admin
+    def is_admin(user_email: str) -> bool:
+        """Check if the current user is an admin based on email."""
+        admin_emails = st.secrets.get("admin_emails", [])
+        return user_email in admin_emails
+
     # Timezone selector in sidebar
     timezones = pytz.all_timezones
     default_tz = "US/Eastern"
@@ -38,6 +44,13 @@ def show_app():
 
         if st.button("Logout", icon=":material/logout:", use_container_width=True):
             st.logout()
+
+        # Show admin portal button for admin users
+        if is_admin(user_id):
+            st.divider()
+            if st.button("🔐 Admin Portal", use_container_width=True, type="secondary"):
+                st.query_params = {"admin": "true"}
+                st.rerun()
 
         st.divider()
 
